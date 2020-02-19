@@ -1,6 +1,14 @@
 from flask import Flask
 import RPi.GPIO as GPIO
 import time
+import pymysql
+import json
+
+with open('../credentials.json', 'r') as credsfile:
+    creds = json.load(credsfile)
+
+db_connection = pymysql.connect(host=creds["host"], user=creds["user"], password=creds["password"], db=creds["db"], cursorclass=pymysql.cursors.DictCursor)
+db_cursor = db_connection.cursor()
 
 app = Flask(__name__)
 
@@ -89,6 +97,12 @@ def web_to_rail(rail):
         return "Vending rail {}.".format(rail)
     else:
         return "Sorry, we can't vend from rail {}. Available rails are: {}.".format(rail, ", ".join([pin_lookup[pin] for pin in good_pins]))
+
+@app.route('/product/add/<string:name>')
+def add_product(name):
+    query = "INSERT INTO Products (name, description, price) values ('{}', 'dummy description', 10.00);".format(name)
+    db_cursor.execute(query)
+    return "Added {}.".format(name)
 
 
 if __name__ == '__main__':
